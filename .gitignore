@@ -1,0 +1,20 @@
+# Frontend (Node/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# Backend (Python/Flask)
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/.env
+
+# Editor/OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Personal notes
+progress-notes.docx
