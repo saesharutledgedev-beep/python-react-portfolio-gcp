@@ -1,0 +1,17 @@
+# Same purpose as backend-service.yaml -- stable internal name/load
+# balancing across the frontend pods. Also ClusterIP: even though the
+# frontend is "public-facing" conceptually, it's still the Ingress that
+# faces the internet, and this Service that the Ingress routes to
+# internally -- nothing here is directly internet-reachable on its own.
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: portfolio
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+    - port: 8080
+      targetPort: 8080

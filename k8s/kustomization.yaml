@@ -1,0 +1,20 @@
+# kustomize ties the individual manifest files into one unit you can
+# apply with a single command: `kubectl apply -k k8s/` applies every
+# resource listed below, in order. It's built into kubectl (no separate
+# install needed) and is also how CI rewrites the placeholder image
+# names to the real Artifact Registry path at deploy time -- see
+# deploy.yml (task #8), which runs
+# `kustomize edit set image backend=<real-path>:<sha>` before applying,
+# swapping out the `backend:latest` / `frontend:latest` placeholders in
+# the Deployment specs without needing to hand-edit YAML per deploy.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - backend-deployment.yaml
+  - backend-service.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml
+  - ingress.yaml
+  - backend-hpa.yaml

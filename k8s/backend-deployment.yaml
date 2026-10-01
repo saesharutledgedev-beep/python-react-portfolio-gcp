@@ -1,0 +1,76 @@
+# A Deployment is a declarative description of "I want N copies of this
+# pod running, always." Kubernetes constantly reconciles reality against
+# this spec -- if a pod crashes or a node dies, the Deployment's
+# controller notices the actual replica count has drifted from the
+# desired count and creates a replacement automatically. This is the
+# main thing `docker compose` does NOT give you: compose starts
+# containers once; it doesn't watch and self-heal them.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: portfolio
+spec:
+  replicas: 2
+  # The selector tells this Deployment which pods belong to it, by label
+  # match. Must match the labels under template.metadata.labels below.
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          # Placeholder -- CI (deploy.yml) overwrites this to the real
+          # Artifact Registry path + git-SHA tag at deploy time via
+          # `kustomize edit set image`, e.g.
+          # us-central1-docker.pkg.dev/PROJECT_ID/portfolio/backend:<sha>.
+          # Left generic here since the real registry path doesn't exist
+          # until Terraform provisions it.
+          image: backend:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: FRONTEND_ORIGIN
+              # Path-based routing means the frontend and backend share
+              # one origin (your domain) in production, so this is set to
+              # the real domain once we have it -- not localhost like in
+              # docker-compose.yml.
+              value: "https://srutledge.me"
+          # Resource requests/limits are REQUIRED on GKE Autopilot --
+          # Autopilot provisions the underlying node capacity based on
+          # what pods declare they need, so a pod with no requests set
+          # will be rejected at apply time, not just "run with defaults"
+          # the way it might on a self-managed cluster.
+          # requests: what this container is guaranteed to get, used for
+          #   scheduling decisions.
+          # limits: the hard ceiling -- exceeding the memory limit gets
+          #   the container killed (OOMKilled); exceeding the CPU limit
+          #   just throttles it.
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          # Liveness: "is this container still alive, or should k8s kill
+          # and restart it?" Readiness: "is this pod ready to receive
+          # traffic yet?" -- a pod can be alive but not ready (e.g. still
+          # starting up), and the Service (next file) uses readiness to
+          # decide whether to send it requests at all.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10

@@ -1,0 +1,27 @@
+# Pods are disposable -- they get new internal IPs every time they're
+# recreated (crash, redeploy, node move). A Service gives a stable name
+# and IP that sits in front of a group of pods (selected by label, same
+# "app: backend" match as the Deployment) and load-balances across
+# however many replicas currently exist. Other things in the cluster
+# reach the backend at the DNS name "backend" (or "backend.portfolio"
+# across namespaces) -- analogous to how compose gave each service a
+# DNS name matching its key.
+#
+# type: ClusterIP (the default) means this is only reachable from inside
+# the cluster -- not exposed to the internet directly. External traffic
+# reaches it through the Ingress (ingress.yaml), which routes to this
+# Service, which routes to a pod. The frontend's static JS still calls
+# the backend over the public internet (same as in docker-compose) --
+# it just arrives via the Ingress/domain, not container-to-container.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: portfolio
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - port: 8080
+      targetPort: 8080

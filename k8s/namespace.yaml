@@ -1,0 +1,9 @@
+# A Namespace is a virtual partition inside the cluster -- a way to group
+# and isolate this app's resources (Deployments, Services, etc.) from
+# anything else that might run in the same GKE cluster later. Without one,
+# everything lands in the "default" namespace, which gets messy fast once
+# a cluster hosts more than one project.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portfolio

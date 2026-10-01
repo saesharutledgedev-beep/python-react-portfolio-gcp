@@ -1,0 +1,50 @@
+# Same Deployment pattern as the backend, but note there's no env: block
+# here for the API URL. That's deliberate -- VITE_API_BASE_URL is a Vite
+# BUILD-time value (inlined into the JS bundle by `npm run build`, see
+# frontend/Dockerfile), not a runtime env var a container can read. So it
+# gets set once, as a --build-arg, when CI builds this image (deploy.yml,
+# task #8) -- by the time this Deployment runs that image, the URL is
+# already baked in and nothing here can change it.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: portfolio
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          # Placeholder, same as the backend -- CI rewrites this to the
+          # real Artifact Registry path + git-SHA tag at deploy time.
+          image: frontend:latest
+          ports:
+            - containerPort: 8080
+          # nginx serving static files is much lighter than the backend,
+          # so smaller requests/limits here.
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10

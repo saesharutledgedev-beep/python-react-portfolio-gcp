@@ -1,0 +1,30 @@
+# HorizontalPodAutoscaler watches a metric (CPU here) and adjusts the
+# target Deployment's replica count within [minReplicas, maxReplicas] to
+# try to hold that metric near the target. This only makes sense paired
+# with the `resources.requests` we set on the backend Deployment -- CPU
+# *utilization* is measured as a percentage of the requested amount
+# (100m requested, actually using 70m -> 70%), so without a request set
+# there'd be nothing for "70%" to be relative to.
+#
+# Only on the backend: it does real work (routes/, JSON responses) under
+# load; the frontend is static files served by nginx, which doesn't
+# meaningfully benefit from CPU-based autoscaling the same way.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: portfolio
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
