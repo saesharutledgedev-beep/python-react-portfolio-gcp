@@ -1,3 +1,10 @@
+# Needed to look up the project NUMBER (distinct from project_id) --
+# the default node service account's email is keyed by number, not ID,
+# and we don't want to hardcode it.
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
 # GCP APIs are off by default per-project -- Terraform can't create a
 # GKE cluster, push to Artifact Registry, etc. until these are explicitly
 # enabled. Each resource below depends on the relevant API being enabled
@@ -49,6 +56,22 @@ resource "google_container_cluster" "primary" {
   deletion_protection = false
 
   depends_on = [google_project_service.container]
+}
+
+# GKE Autopilot nodes run as the default Compute Engine service account
+# unless a custom one is configured (confirmed via `gcloud container
+# clusters describe --format="value(nodeConfig.serviceAccount)"` ->
+# "default"). This is a DIFFERENT identity from the GitHub Actions
+# deployer SA -- that one is who CI authenticates as to PUSH images;
+# this one is who kubelet on each node authenticates as to PULL images
+# at runtime. Granting artifactregistry.writer to the deployer SA
+# earlier covered push, but nothing ever granted pull access to the
+# nodes themselves -- discovered the hard way via a real
+# ImagePullBackOff / 403 Forbidden on the first live deploy.
+resource "google_project_iam_member" "node_artifact_registry_reader" {
+  project = var.project_id
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
 
 # Artifact Registry is Google's current container registry product

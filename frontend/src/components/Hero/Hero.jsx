@@ -20,9 +20,9 @@ function Hero() {
       <section id="hero">
         {/* <ul className="hero-list"> */}
 
-          {heroLoading && <p>Loading contacts…</p>}
+          {heroLoading && <p>Loading hero…</p>}
           {heroError && (
-            <p className="error">Couldn't load contacts: {heroError}</p>
+            <p className="error">Couldn't load hero: {heroError}</p>
           )}
           {!heroLoading && !heroError && (
             <ul id="hero-list">
