@@ -3,7 +3,9 @@
 # every node_modules package are dev-time tooling -- none of it needs to
 # ship in the final image. Naming it "build" lets stage 2 reference it
 # by name instead of by index.
-FROM node:20-alpine AS build
+# Pulled via mirror.gcr.io for the same Docker Hub rate-limit reason as
+# the backend's Dockerfile -- see that file's comment.
+FROM mirror.gcr.io/library/node:20-alpine AS build
 
 WORKDIR /app
 
@@ -30,7 +32,7 @@ RUN npm run build
 # from stage 1. Everything from the build stage (node_modules, source
 # files, the Node runtime itself) is left behind -- this is the whole
 # point of a multi-stage build: a small, production-only final image.
-FROM nginx:alpine
+FROM mirror.gcr.io/library/nginx:alpine
 
 # Copy the built assets out of the "build" stage by name.
 COPY --from=build /app/dist /usr/share/nginx/html
