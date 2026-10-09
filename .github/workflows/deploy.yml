@@ -1,0 +1,93 @@
+# Runs only on pushes/merges to main -- this is the one workflow that
+# actually touches the live cluster. Everything it needs (which GCP
+# project/cluster/registry, which identity to assume) comes from GitHub
+# Actions Variables set from Terraform's outputs (task #12) -- nothing
+# here is hardcoded, and none of it is a secret: a WIF provider path, a
+# service account email, and a registry URL reveal no credentials on
+# their own, which is the whole point of WIF over a static key.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+# id-token: write is what lets this workflow request GitHub's own OIDC
+# token and present it to GCP -- without this permission, the WIF auth
+# step below has nothing to authenticate with.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Exchanges this workflow run's GitHub OIDC token for short-lived
+      # GCP credentials, impersonating the deployer service account --
+      # the actual keyless-auth step this whole Terraform setup exists
+      # to enable. No service account key file anywhere.
+      - name: Authenticate to GCP
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Lets plain `docker push` authenticate to Artifact Registry using
+      # the credentials the auth step just obtained, instead of needing
+      # a separate docker-specific login step.
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_CLUSTER_REGION }}-docker.pkg.dev --quiet
+
+      # Tagged by commit SHA, never "latest" -- this is what makes
+      # rollback possible later (every past image stays addressable by
+      # its own tag; see the Artifact Registry cleanup policy in
+      # infra/main.tf, which keeps the last 10 per image).
+      - name: Build and push backend image
+        run: |
+          docker build -t ${{ vars.GCP_ARTIFACT_REGISTRY }}/backend:${{ github.sha }} ./backend
+          docker push ${{ vars.GCP_ARTIFACT_REGISTRY }}/backend:${{ github.sha }}
+
+      - name: Build and push frontend image
+        run: |
+          docker build \
+            --build-arg VITE_API_BASE_URL=${{ vars.APP_DOMAIN }}/api \
+            -t ${{ vars.GCP_ARTIFACT_REGISTRY }}/frontend:${{ github.sha }} \
+            ./frontend
+          docker push ${{ vars.GCP_ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}
+
+      # Fetches cluster credentials (kubeconfig) so kubectl/kustomize
+      # below can talk to portfolio-cluster -- using the same WIF
+      # identity authenticated above, authorized via the
+      # roles/container.developer binding Terraform granted it.
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ vars.GCP_CLUSTER_NAME }}
+          location: ${{ vars.GCP_CLUSTER_REGION }}
+
+      # This is the step that replaces the backend:latest / frontend:latest
+      # placeholders in k8s/*-deployment.yaml -- only in this run's
+      # temporary checkout, never committed back to the repo (see the
+      # earlier discussion: the repo's YAML always shows the placeholder).
+      - name: Set image tags
+        working-directory: k8s
+        run: |
+          kustomize edit set image backend=${{ vars.GCP_ARTIFACT_REGISTRY }}/backend:${{ github.sha }}
+          kustomize edit set image frontend=${{ vars.GCP_ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}
+
+      - name: Apply manifests
+        run: kubectl apply -k k8s/
+
+      # Waits for the rolling update to actually finish successfully --
+      # without this, the workflow would report success the instant
+      # `apply` is accepted, even if the new pods then crash-loop.
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/backend -n portfolio --timeout=180s
+          kubectl rollout status deployment/frontend -n portfolio --timeout=180s
