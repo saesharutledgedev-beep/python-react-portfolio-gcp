@@ -55,8 +55,13 @@ jobs:
 
       - name: Build and push frontend image
         run: |
+          # No /api suffix here -- each Redux slice already appends its
+          # own path (e.g. `${API_BASE}/api/about`), same pattern as
+          # docker-compose.yml's bare http://localhost:8080. Appending
+          # /api here too previously produced a double /api/api/about
+          # and 404s in production.
           docker build \
-            --build-arg VITE_API_BASE_URL=${{ vars.APP_DOMAIN }}/api \
+            --build-arg VITE_API_BASE_URL=${{ vars.APP_DOMAIN }} \
             -t ${{ vars.GCP_ARTIFACT_REGISTRY }}/frontend:${{ github.sha }} \
             ./frontend
           docker push ${{ vars.GCP_ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}
