@@ -1,0 +1,43 @@
+# Runs on every push and PR, to any branch -- a safety net that catches
+# broken code/Dockerfiles BEFORE they can reach main (where deploy.yml
+# would otherwise try to ship them). No GCP credentials are used or
+# needed here at all -- this only ever touches GitHub's own runner.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint frontend (oxlint)
+        working-directory: frontend
+        run: npm run lint
+
+      # Build only -- no push, no registry auth needed. This just proves
+      # both Dockerfiles are valid and actually produce an image, the
+      # same build that deploy.yml will later do for real.
+      - name: Build backend image
+        run: docker build -t backend:ci ./backend
+
+      - name: Build frontend image
+        # Needs *some* value for the build arg since Vite requires it to
+        # produce a build, but the actual value doesn't matter here --
+        # this is just proving the Dockerfile/build succeeds, not
+        # testing against the real API.
+        run: docker build --build-arg VITE_API_BASE_URL=http://localhost:8080 -t frontend:ci ./frontend

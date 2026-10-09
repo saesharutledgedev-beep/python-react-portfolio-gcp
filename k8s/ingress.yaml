@@ -1,0 +1,55 @@
+# ManagedCertificate is a GKE-specific resource (not plain Kubernetes) --
+# Google automatically provisions and auto-renews a real TLS cert for the
+# domain(s) listed here. It stays in "Provisioning" status until Google
+# can verify your DNS actually points at the Ingress's IP, which is why
+# we need the Ingress to exist (and get an IP) before DNS, and DNS to
+# propagate before this cert finishes provisioning (see README once
+# written, and the live walkthrough -- task #13).
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: portfolio-cert
+  namespace: portfolio
+spec:
+  domains:
+    - srutledge.me
+
+---
+# The Ingress is the one piece of this whole k8s/ directory that's
+# actually internet-facing. GKE provisions a Google Cloud Load Balancer
+# behind the scenes to implement it. Path-based routing (our earlier
+# decision): "/" goes to the frontend Service, "/api" goes to the
+# backend Service -- both served from the same domain, so the browser
+# sees the frontend and backend as the same origin.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portfolio-ingress
+  namespace: portfolio
+  annotations:
+    # Links this Ingress to the ManagedCertificate above by name.
+    networking.gke.io/managed-certificates: portfolio-cert
+    # Forces HTTP requests to redirect to HTTPS -- without this, both
+    # would work side by side.
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  rules:
+    - host: srutledge.me
+      http:
+        paths:
+          # More specific path listed first -- Ingress path matching is
+          # order-sensitive for overlapping prefixes like "/" and "/api".
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080

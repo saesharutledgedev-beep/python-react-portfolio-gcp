@@ -1,0 +1,39 @@
+# Local-only convenience file. Not used by GKE/production -- Kubernetes
+# manifests (k8s/) do the equivalent job in the cluster. This just lets
+# you run `docker compose up` and get both containers talking to each
+# other with one command, instead of two manual `docker build`/`docker run`
+# invocations with matching ports typed by hand.
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      # host:container -- reach the backend at localhost:8080 from your
+      # machine; inside the compose network, other services reach it at
+      # http://backend:8080 (compose gives each service a DNS name
+      # matching its key).
+      - "8080:8080"
+    environment:
+      # Read at container *runtime* (os.environ.get in app.py) -- this is
+      # a plain ENV, not a build ARG, because Flask/gunicorn are already
+      # running processes, not a build step. Points CORS at the frontend
+      # container's published port.
+      FRONTEND_ORIGIN: "http://localhost:3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Read at *build* time (Vite inlines it into the JS bundle --
+        # see the ARG discussion in frontend/Dockerfile). Points the
+        # frontend at the backend container's published port.
+        VITE_API_BASE_URL: "http://localhost:8080"
+    ports:
+      - "3000:8080"
+    depends_on:
+      # Only controls container *start order*, not readiness -- backend's
+      # process starts before frontend's, but gunicorn being up doesn't
+      # guarantee it's finished initializing. Fine for this app (no DB
+      # connection, etc. to wait on); a real health-check dependency would
+      # need a `healthcheck:` block instead.
+      - backend
