@@ -1,7 +1,12 @@
 # Base image: official Python 3.12 build on a minimal Debian ("slim").
 # Smaller than the default python:3.12 image (no compilers, docs, etc.),
 # which means faster pulls/builds and a smaller attack surface.
-FROM python:3.12-slim
+# Pulled via mirror.gcr.io (Google's public Docker Hub mirror) instead of
+# docker.io directly -- GitHub-hosted runners share IPs across countless
+# workflows, which hits Docker Hub's anonymous-pull rate limit (429 Too
+# Many Requests) often enough to break builds unpredictably. Same image,
+# same tag, just a different unrate-limited source.
+FROM mirror.gcr.io/library/python:3.12-slim
 
 # All following instructions (COPY, RUN, CMD) run relative to /app inside
 # the container. Docker creates this directory if it doesn't exist.
