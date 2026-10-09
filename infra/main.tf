@@ -61,5 +61,23 @@ resource "google_artifact_registry_repository" "portfolio" {
   repository_id = var.artifact_repo_name
   format        = "DOCKER"
 
+  # Without this, every image CI ever pushes (one per commit to main,
+  # tagged by git SHA) accumulates forever. KEEP + most_recent_versions
+  # tells Artifact Registry to retain only the 10 newest versions PER
+  # image name (backend and frontend tracked separately) and delete
+  # anything older automatically -- no manual cleanup, no cron job.
+  # cleanup_policy_dry_run = false means this actually deletes rather
+  # than just reporting what it would delete.
+  cleanup_policy_dry_run = false
+
+  cleanup_policies {
+    id     = "keep-last-10"
+    action = "KEEP"
+
+    most_recent_versions {
+      keep_count = 10
+    }
+  }
+
   depends_on = [google_project_service.artifact_registry]
 }

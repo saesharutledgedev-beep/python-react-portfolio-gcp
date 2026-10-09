@@ -14,6 +14,19 @@ backend/**/__pycache__/
 backend/*.pyc
 backend/.env
 
+# Terraform
+# .terraform/ holds downloaded provider plugin binaries -- large, and
+# trivially re-downloaded by anyone via `terraform init`, so never
+# committed. State files and *.tfvars are excluded because they can
+# contain real resource IDs/values specific to one person's local run --
+# .terraform.lock.hcl (NOT excluded) is the one file that should be
+# committed, since it pins exact provider versions for reproducibility.
+infra/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+
 # Editor/OS
 .vscode/
 .DS_Store
