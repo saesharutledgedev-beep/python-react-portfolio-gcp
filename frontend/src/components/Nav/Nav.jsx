@@ -6,6 +6,7 @@ const modalSections = [
   { id: 'education', label: 'Education' },
   { id: 'projects', label: 'Projects' },
   { id: 'resume', label: 'Résumé' },
+  { id: 'publications', label: 'Publications' },
 ]
 
 function Nav({ onOpenModal }) {
