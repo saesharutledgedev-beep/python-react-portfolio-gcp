@@ -24,7 +24,7 @@ function Education() {
         {!educationInfoLoading && !educationInfoError && (
           <>
             <h2>{educationInfo.name}</h2>
-            <ul className="contact-list">
+            <ul className="education-list">
               {educationInfo.education_info.map((school) => (
                 <li key={school.label}>
                   <h3>{school.label}</h3>
