@@ -43,19 +43,7 @@
     }
   }
 
-  @media (max-width: 440px) {
-    padding: 0.5rem .15rem .5rem .2rem;
-    gap: 4px 1px;
-    justify-content: center;
-
-    a,
-    button {
-      font-size: 14px;
-      padding: 0.375rem 0.25rem;
-    }
-  }
-
-  @media (max-width: 375px) {
+  @media (max-width: 700px) {
     padding: 0.5rem .15rem .5rem 0;
     gap: 4px 2.5px;
     justify-content: center;
@@ -133,10 +121,10 @@
   @media (max-width: 1024px) {
     padding: 2rem 0 0.25rem 2rem;
     margin-left: 1rem !important;
-    max-width: 400px;
+    width: 90%;
   }
 
-  @media (max-width: 670px) {
+  @media (max-width: 700px) {
     padding: 2rem 0 0.25rem 1.2rem;
     margin-left: 1rem !important;
     width: 90%;
@@ -159,8 +147,8 @@
 #summary {
   font-size: 20px;
 
-  @media (max-width: 375px) {
-    max-width: 350px !important;
+  @media (max-width: 700px) {
+    max-width: 90%;
   }
 }
 
@@ -230,10 +218,16 @@
     max-width: 300px;
   }
 
+  @media (max-width: 1024px) {
+    padding: 1.875rem 0.9375rem 0 0.9375rem;
+    justify-content: center;
+    max-width: 100%;
+  }
+
   @media (max-width: 700px) {
     padding: 1.875rem 0.9375rem 0 0;
     justify-content: center;
-    max-width: 100%
+    max-width: 100%;
   }
 }
 
@@ -249,17 +243,13 @@
   .hero-items {
     break-inside: avoid;
     margin-bottom: 1rem;
-
-    @media (max-width: 670px) {
-      max-width: 275px !important;
-    }
   }
 }
 
 .quick-links {
   margin: 1em 1em 1em 0;
 
-  @media (max-width: 1300px) {
+  @media (max-width: 1024px) {
     gap: 6px !important;
     font-size: 15.5px;
   }
