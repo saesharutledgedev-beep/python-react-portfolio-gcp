@@ -47,7 +47,7 @@ function App() {
           </a>
         </div>
       </Modal>
-      <Modal isOpen={activeModal === 'publications'} onClose={closeModal}>
+      {/* <Modal isOpen={activeModal === 'publications'} onClose={closeModal}>
         <h2 id="publications-name">Publications</h2>
         <div className="modal-actions publications">
           <a href="https://journal.media-culture.org.au/index.php/mcjournal/search/authors/view?givenName=Saesha&familyName=Senger&affiliation=University%20of%20Kentucky&country=US&authorName=Senger%2C%20Saesha" target="_blank">
@@ -64,7 +64,7 @@ function App() {
             Political Dimensions of Popular Music in the 21st Century
           </a>
         </div>
-      </Modal>
+      </Modal> */}
     </>
   )
 }

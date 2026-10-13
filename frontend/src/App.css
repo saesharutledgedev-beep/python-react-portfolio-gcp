@@ -248,11 +248,8 @@
 
 .quick-links {
   margin: 1em 1em 1em 0;
-
-  @media (max-width: 1024px) {
-    gap: 6px !important;
-    font-size: 15.5px;
-  }
+  font-size: 15.5px;
+  gap: 6px !important;
 }
 
 .contact-list,
@@ -327,13 +324,13 @@
   }
 }
 
-#publications-name {
+/* #publications-name {
   @media (max-width: 700px) {
     padding: 0.3125rem 1.5625rem 0.9375rem 1.5rem;
   }
-}
+} */
 
-.publications {
+/* .publications {
   @media (max-width: 700px) {
     padding: 0 1.5625rem 1.25rem 0.9375rem;
     font-size: 14px;
@@ -344,7 +341,7 @@
       padding: 0.9375rem 1.5625rem 0.9375rem 2.1875rem !important;
     }
   }
-}
+} */
 
 .modal-close {
   position: absolute;
