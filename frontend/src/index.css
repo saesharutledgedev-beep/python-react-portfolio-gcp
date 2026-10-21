@@ -75,11 +75,10 @@ h2 {
 }
 
 h1 {
-  font-size: 34px;
+  font-size: 32px;
   letter-spacing: -1.68px;
   margin: 1.75rem 0;
   @media (max-width: 1024px) {
-    font-size: 34px;
     margin: 1.25rem 0;
   }
 }
