@@ -39,10 +39,13 @@ function App() {
       <Modal isOpen={activeModal === 'resume'} onClose={closeModal}>
         <h2 id="resume-name">Résumé</h2>
         <div className="modal-actions resume">
-          <a href="/Saesha_Rutledge_Resume_THD_EngineeringManager09012026.pdf" download>
+          <a href="/Saesha_Rutledge_Resume_FullStackEngineer_Portfolio.pdf" download>
+            Full Stack Engineer Résumé
+          </a>
+          <a href="/Saesha_Rutledge_Resume_Manager_Portfolio.pdf" download>
             Engineering Manager Résumé
           </a>
-          <a href="/SaeshaRutledgeTechProdManager_09032026 (1).pdf" download>
+          <a href="/Saesha_Rutledge_Resume_ProductManager_Portfolio.pdf" download>
             Product Manager Résumé
           </a>
         </div>
